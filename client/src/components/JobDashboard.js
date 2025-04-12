@@ -5,8 +5,6 @@ import {
     Paper, 
     TextField, 
     Button, 
-    Card, 
-    CardContent, 
     Typography,
     Box,
     FormControlLabel,
@@ -14,8 +12,12 @@ import {
     Select,
     MenuItem,
     FormControl,
-    InputLabel
+    InputLabel,
+    Alert,
+    Autocomplete,
+    Chip
 } from '@mui/material';
+import JobPreview from './JobPreview';
 import axios from 'axios';
 
 const JobDashboard = () => {
@@ -26,6 +28,33 @@ const JobDashboard = () => {
     const [error, setError] = useState(null);
     const [remoteOnly, setRemoteOnly] = useState(false);
     const [minSalary, setMinSalary] = useState('');
+    const [jobCategory, setJobCategory] = useState('');
+    const [jobTitle, setJobTitle] = useState(null);
+
+    const jobCategories = [
+        '技术/IT',
+        '金融/财务',
+        '市场/营销',
+        '销售',
+        '人力资源',
+        '运营',
+        '设计',
+        '产品',
+        '其他'
+    ];
+
+    const jobTitlesMap = {
+        '技术/IT': ['软件工程师', '前端开发', '后端开发', 'DevOps工程师', '数据工程师', '人工智能工程师'],
+        '金融/财务': ['财务分析师', '会计', '投资经理', '风险控制', '审计师'],
+        '市场/营销': ['市场经理', '营销专员', '品牌经理', '内容营销', '数字营销'],
+        '销售': ['销售经理', '客户经理', '销售代表', '商务拓展', '销售支持'],
+        '人力资源': ['HR经理', '招聘专员', '培训经理', 'HRBP', '薪酬福利专员'],
+        '运营': ['运营经理', '产品运营', '内容运营', '用户运营', '活动运营'],
+        '设计': ['UI设计师', 'UX设计师', '平面设计师', '交互设计师', '视觉设计师'],
+        '产品': ['产品经理', '产品专员', '数据分析师', '产品运营', '用户研究员'],
+        '其他': ['行政', '客服', '法务', '采购', '其他职位']
+    };
+
     const salaryOptions = [
         { value: '', label: 'Any' },
         { value: '50000', label: '50k+' },
@@ -118,23 +147,64 @@ const JobDashboard = () => {
                     Job Market Dashboard
                 </Typography>
 
-                <Paper sx={{ p: 2, mb: 4 }}>
+                <Paper sx={{ p: 3, mb: 4 }}>
                     <form onSubmit={handleSearch}>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={5}>
-                                <TextField
-                                    fullWidth
-                                    label="Search Jobs"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
+                            <Grid item xs={12} sm={3}>
+                                <FormControl fullWidth>
+                                    <InputLabel>职位类别</InputLabel>
+                                    <Select
+                                        value={jobCategory}
+                                        label="职位类别"
+                                        onChange={(e) => {
+                                            setJobCategory(e.target.value);
+                                            setJobTitle(null); // 重置职位选择
+                                        }}
+                                    >
+                                        {jobCategories.map((category) => (
+                                            <MenuItem key={category} value={category}>
+                                                {category}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={3}>
+                                <Autocomplete
+                                    value={jobTitle}
+                                    onChange={(event, newValue) => {
+                                        setJobTitle(newValue);
+                                        if (newValue) {
+                                            setQuery(newValue);
+                                        }
+                                    }}
+                                    options={jobCategory ? jobTitlesMap[jobCategory] : []}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="具体职位"
+                                            fullWidth
+                                        />
+                                    )}
+                                    disabled={!jobCategory}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={5}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField
                                     fullWidth
-                                    label="Location"
+                                    label="关键词搜索"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="输入技能、公司等关键词"
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={3}>
+                                <TextField
+                                    fullWidth
+                                    label="工作地点"
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
+                                    placeholder="城市名称"
                                 />
                             </Grid>
                             <Grid item xs={12} sm={2}>
@@ -227,55 +297,12 @@ const JobDashboard = () => {
                 </Paper>
 
                 {error && (
-                    <Typography color="error" sx={{ mb: 2 }}>
+                    <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
-                    </Typography>
+                    </Alert>
                 )}
 
-                {loading ? (
-                    <Typography>Loading...</Typography>
-                ) : (
-                    <Grid container spacing={3}>
-                        {jobs.map((job) => (
-                            <Grid item xs={12} md={6} key={job._id}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6" component="h2">
-                                            {job.title || 'No Title'}
-                                        </Typography>
-                                        <Typography color="textSecondary" gutterBottom>
-                                            {job.company || 'No Company'}
-                                        </Typography>
-                                        <Typography variant="body2" component="p">
-                                            Location: {job.location || 'No Location'}
-                                        </Typography>
-                                        {job.salary && typeof job.salary === 'string' && (
-                                            <Typography variant="body2" component="p">
-                                                Salary: {job.salary}
-                                            </Typography>
-                                        )}
-                                        <Typography variant="body2" component="p" sx={{ mt: 1 }}>
-                                            {typeof job.description === 'string' ? job.description : 
-                                             typeof job.description === 'object' && job.description?.body ? 
-                                             job.description.body : 'No description available'}
-                                        </Typography>
-                                        <Box sx={{ mt: 2 }}>
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                href={job.apply_link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                Apply Now
-                                            </Button>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                )}
+                <JobPreview jobs={jobs} loading={loading} />
             </Box>
         </Container>
     );

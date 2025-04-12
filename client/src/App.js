@@ -1,6 +1,6 @@
 import React from 'react';
 import { CssBaseline, ThemeProvider, createTheme, GlobalStyles } from '@mui/material';
-import JobDashboard from './components/JobDashboard';
+import JobSearch from './components/JobSearch';
 
 const theme = createTheme({
   palette: {
@@ -89,7 +89,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <GlobalStyles styles={globalStyles} />
-      <JobDashboard />
+      <JobSearch />
     </ThemeProvider>
   );
 }

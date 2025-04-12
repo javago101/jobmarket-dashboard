@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_KEY=${REACT_APP_API_KEY}
+    depends_on:
+      - server
+
+  # 后端服务
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - MONGODB_URI=mongodb://mongodb:27017/jobSearch
+      - JSEARCH_API_KEY=${JSEARCH_API_KEY}
+      - API_KEY=${API_KEY}
+    depends_on:
+      - mongodb
+
+  # MongoDB服务
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
